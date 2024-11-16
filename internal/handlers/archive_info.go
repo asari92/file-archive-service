@@ -24,9 +24,9 @@ type Response struct {
 	Files       []FileInfo `json:"files"`
 }
 
-func HandleArchiveInformation(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleArchiveInformation(w http.ResponseWriter, r *http.Request) {
 	// Парсинг формы с файлом
-	err := r.ParseMultipartForm(10 << 20) // Размер буфера 10MB
+	err := r.ParseMultipartForm(h.Config.BufUploadSizeInfo)
 	if err != nil {
 		http.Error(w, "Error parsing multipart/form data: "+err.Error(), http.StatusBadRequest)
 		return

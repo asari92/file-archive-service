@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+проверить реальный тип файлов вынести в отдельную функцию это проверку и использовать её в 2х хэндлерах
+
 // Разрешенные MIME-типы файлов для архивации
 var allowedMIMETypes = map[string]bool{
 	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": true,
@@ -70,7 +72,7 @@ func (h *Handler) HandleCreateArchive(w http.ResponseWriter, r *http.Request) {
 
 	// Устанавливаем заголовки ответа
 	w.Header().Set("Content-Type", "application/zip")
-	// w.Header().Set("Content-Disposition", "attachment; filename=\"archive.zip\"")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"archive.zip\"")
 
 	// Отправка архива
 	w.Write(buf.Bytes())

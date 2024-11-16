@@ -10,6 +10,11 @@ type Config struct {
 	Port                string
 	BufUploadSizeInfo   int64
 	BufUploadSizeCreate int64
+	BufUploadSizeMail   int64
+	SMTPPort            string
+	SMTPHost            string
+	SMTPUser            string
+	SMTPPassword        string
 }
 
 // New returns a new Config struct
@@ -18,6 +23,11 @@ func New() *Config {
 		Port:                getEnv("PORT", ":3000"),
 		BufUploadSizeInfo:   int64(getEnvAsInt("MAX_UPLOAD_SIZE_INFO", 10485760)),
 		BufUploadSizeCreate: int64(getEnvAsInt("MAX_UPLOAD_SIZE_CREATE", 33554432)),
+		BufUploadSizeMail:   int64(getEnvAsInt("MAX_UPLOAD_SIZE_MAIL", 10485760)),
+		SMTPHost:            getEnv("SMTP_HOST", ""),
+		SMTPPort:            getEnv("SMTP_PORT", "587"),
+		SMTPUser:            getEnv("SMTP_USER", ""),
+		SMTPPassword:        getEnv("SMTP_PASSWORD", ""),
 	}
 }
 

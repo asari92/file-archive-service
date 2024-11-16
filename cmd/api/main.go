@@ -22,8 +22,9 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("POST /api/archive/information", http.HandlerFunc(handler.HandleArchiveInformation))
 	mux.Handle("POST /api/archive/files", http.HandlerFunc(handler.HandleCreateArchive))
+	mux.Handle("POST /api/mail/file", http.HandlerFunc(handler.HandleSendFile))
 
 	log.Printf("Server starting on port %s", conf.Port)
-	// Запуск сервера
-	log.Fatal(http.ListenAndServe(conf.Port, mux)) // `port` уже содержит нужное двоеточие
+
+	log.Fatal(http.ListenAndServe(conf.Port, mux))
 }

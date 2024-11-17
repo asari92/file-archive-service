@@ -3,12 +3,14 @@ package handlers
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/smtp"
 	"net/textproto"
 	"strings"
+	"time"
 )
 
 var allowedMimeTypes = map[string]bool{
@@ -36,18 +38,6 @@ func (h *Handler) HandleSendFile(w http.ResponseWriter, r *http.Request) {
 
 	fileHeader := files[0]
 
-	// file, fileHeader, err := r.FormFile("file")
-	// if err != nil {
-	// 	http.Error(w, "Failed to get file", http.StatusBadRequest)
-	// 	return
-	// }
-	// defer file.Close()
-
-	if !allowedMimeTypes[fileHeader.Header.Get("Content-Type")] {
-		http.Error(w, "Unsupported file type", http.StatusBadRequest)
-		return
-	}
-
 	file, err := fileHeader.Open()
 	if err != nil {
 		http.Error(w, "Failed to open file", http.StatusInternalServerError)
@@ -55,32 +45,15 @@ func (h *Handler) HandleSendFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	if err := checkFileType(file, fileHeader.Header.Get("Content-Type")); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	// Получение списка email-адресов из формы
 	emailList := strings.Split(r.FormValue("emails"), ",")
 	if len(emailList) == 0 || emailList[0] == "" {
 		http.Error(w, "No valid emails provided", http.StatusBadRequest)
-		return
-	}
-
-	// Чтение первых 512 байт для определения MIME типа
-	buf := make([]byte, 512)
-	_, err = file.Read(buf)
-	if err != nil {
-		http.Error(w, "Failed to read file", http.StatusInternalServerError)
-		return
-	}
-
-	expectedType := fileHeader.Header.Get("Content-Type")
-	detectedType := http.DetectContentType(buf)
-	if detectedType != expectedType {
-		http.Error(w, "Actual file type does not match expected file type", http.StatusBadRequest)
-		return
-	}
-
-	// Возвращение указателя в начало файла перед отправкой
-	_, err = file.Seek(0, io.SeekStart)
-	if err != nil {
-		http.Error(w, "Failed to seek file", http.StatusInternalServerError)
 		return
 	}
 
@@ -110,18 +83,8 @@ func (h *Handler) sendEmailWithAttachment(file multipart.File, filename string, 
 	headers["Content-Type"] = "multipart/mixed; boundary=" + writer.Boundary()
 	writeHeaders(&email, headers)
 
-	// Добавление тела письма
-	part, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/plain; charset=utf-8"}})
-	if err != nil {
-		return err
-	}
-	_, err = part.Write([]byte("Here is the document you requested.\n"))
-	if err != nil {
-		return err
-	}
-
 	// Добавление файла как вложения
-	part, err = writer.CreatePart(textproto.MIMEHeader{
+	part, err := writer.CreatePart(textproto.MIMEHeader{
 		"Content-Disposition":       {"attachment; filename=\"" + filename + "\""},
 		"Content-Type":              {contentType},
 		"Content-Transfer-Encoding": {"base64"},
@@ -141,8 +104,31 @@ func (h *Handler) sendEmailWithAttachment(file multipart.File, filename string, 
 }
 
 func writeHeaders(w io.Writer, headers map[string]string) {
+	headers["Date"] = time.Now().Format(time.RFC1123Z)
 	for k, v := range headers {
 		w.Write([]byte(k + ": " + v + "\r\n"))
 	}
 	w.Write([]byte("\r\n"))
+}
+
+func checkFileType(file multipart.File, expectedType string) error {
+	if !allowedMimeTypes[expectedType] {
+		return fmt.Errorf("unsupported file type")
+	}
+
+	buf := make([]byte, 512)
+	if _, err := file.Read(buf); err != nil {
+		return fmt.Errorf("failed to read file: %v", err)
+	}
+
+	detectedType := http.DetectContentType(buf)
+	if detectedType != expectedType {
+		return fmt.Errorf("actual file type '%s' does not match expected file type '%s'", detectedType, expectedType)
+	}
+
+	// Возвращение указателя в начало файла
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("failed to seek file: %v", err)
+	}
+	return nil
 }

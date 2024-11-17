@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	Host                string
 	Port                string
 	BufUploadSizeInfo   int64
 	BufUploadSizeCreate int64
@@ -23,6 +24,7 @@ type Config struct {
 // New returns a new Config struct
 func New() *Config {
 	return &Config{
+		Host:                getEnv("HOST", "http://localhost"),
 		Port:                getEnv("PORT", ":3000"),
 		BufUploadSizeInfo:   int64(getEnvAsInt("MAX_UPLOAD_SIZE_INFO", 10485760)),
 		BufUploadSizeCreate: int64(getEnvAsInt("MAX_UPLOAD_SIZE_CREATE", 33554432)),

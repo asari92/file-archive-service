@@ -8,9 +8,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
-
-	gomail "gopkg.in/mail.v2"
 )
 
 var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
@@ -20,8 +17,8 @@ var allowedSignatures = map[string][]byte{
 	"application/pdf": {0x25, 0x50, 0x44, 0x46}, // PDF
 }
 
-func (h *Handler) HandleSendFile(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(h.Config.BufUploadSizeMail)
+func (app *Application) HandleSendFile(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(app.Config.BufUploadSizeMail)
 	if err != nil {
 		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
 		return
@@ -35,7 +32,7 @@ func (h *Handler) HandleSendFile(w http.ResponseWriter, r *http.Request) {
 
 	fileHeader := files[0]
 
-	if fileHeader.Size >= h.Config.MaxSendFileSize {
+	if fileHeader.Size >= app.Config.MaxSendFileSize {
 		http.Error(w, "file size exceeds the maximum limit", http.StatusBadRequest)
 		return
 	}
@@ -61,7 +58,7 @@ func (h *Handler) HandleSendFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Подготовка и отправка писем
-	if err := h.sendEmailWithAttachment(file, fileHeader.Filename, recipients); err != nil {
+	if err := app.Service.Mail.SendEmailWithAttachment(file, fileHeader.Filename, recipients); err != nil {
 		http.Error(w, "Failed to send email: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -71,24 +68,24 @@ func (h *Handler) HandleSendFile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *Handler) sendEmailWithAttachment(file multipart.File, filename string, recipients []string) error {
-	d := gomail.NewDialer(h.Config.SMTPHost, h.Config.SMTPPort, h.Config.SMTPUser, h.Config.SMTPPassword)
-	d.Timeout = h.Config.DialerTimeout * time.Second // Устанавливаем таймаут на 60 секунд
+// func (app *Application) sendEmailWithAttachment(file multipart.File, filename string, recipients []string) error {
+// 	d := gomail.NewDialer(app.Config.SMTPHost, app.Config.SMTPPort, app.Config.SMTPUser, app.Config.SMTPPassword)
+// 	d.Timeout = app.Config.DialerTimeout * time.Second // Устанавливаем таймаут на 60 секунд
 
-	m := gomail.NewMessage()
-	// m.SetHeader("From", h.Config.SMTPUser)
-	m.SetHeader("From", "dulmaev.andrei@gmail.com")
-	m.SetHeader("To", recipients...)
-	m.SetHeader("Subject", "Document")
-	m.AttachReader(filename, file)
+// 	m := gomail.NewMessage()
+// 	// m.SetHeader("From", h.Config.SMTPUser)
+// 	m.SetHeader("From", "dulmaev.andrei@gmail.com")
+// 	m.SetHeader("To", recipients...)
+// 	m.SetHeader("Subject", "Document")
+// 	m.AttachReader(filename, file)
 
-	if err := d.DialAndSend(m); err != nil {
-		fmt.Println("Failed to send email:", err)
-		return err
-	}
+// 	if err := d.DialAndSend(m); err != nil {
+// 		fmt.Println("Failed to send email:", err)
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func checkFileSignature(file multipart.File, expectedType string) error {
 	expectedSignature, ok := allowedSignatures[expectedType]

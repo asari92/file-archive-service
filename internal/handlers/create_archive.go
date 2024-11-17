@@ -15,8 +15,8 @@ var allowedMIMETypes = map[string]bool{
 	"image/png":       true,
 }
 
-func (h *Handler) HandleCreateArchive(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(h.Config.BufUploadSizeCreate)
+func (app *Application) HandleCreateArchive(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(app.Config.BufUploadSizeCreate)
 	if err != nil {
 		http.Error(w, "Error parsing multipart form: "+err.Error(), http.StatusBadRequest)
 		return

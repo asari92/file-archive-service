@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
-	"net/http"
+	"log/slog"
+	"os"
 
 	"file-archive-service/internal/handlers"
+	"file-archive-service/internal/service"
 	"file-archive-service/internal/utils"
 	"file-archive-service/pkg/config"
 )
@@ -17,14 +19,29 @@ func main() {
 
 	conf := config.New()
 
-	handler := handlers.NewHandler(conf)
+	// Инициализация нового логгера slog
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,            // Включить вывод источника вызова (файл и строка)
+		Level:     slog.LevelDebug, // задан дебаг уровень, можно поменять на инфо чтобы убрать лишнюю инфу
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				// Устанавливаем формат времени на "2006-01-02 15:04:05"
+				a.Value = slog.StringValue(a.Value.Time().Format("2006-01-02 15:04:05"))
+			}
+			return a
+		},
+	}))
 
-	mux := http.NewServeMux()
-	mux.Handle("POST /api/archive/information", http.HandlerFunc(handler.HandleArchiveInformation))
-	mux.Handle("POST /api/archive/files", http.HandlerFunc(handler.HandleCreateArchive))
-	mux.Handle("POST /api/mail/file", http.HandlerFunc(handler.HandleSendFile))
+	slog.SetDefault(logger)
 
-	log.Printf("Server starting on port %s", conf.Port)
+	app := &handlers.Application{
+		Config:  conf,
+		Logger:  logger,
+		Service: service.NewService(conf),
+	}
 
-	log.Fatal(http.ListenAndServe(conf.Port, mux))
+	err := app.Serve(conf.Host + ":" + conf.Port)
+	if err != nil {
+		logger.Error("Fatal server error", "error", err)
+	}
 }

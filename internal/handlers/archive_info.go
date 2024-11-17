@@ -8,25 +8,9 @@ import (
 	"file-archive-service/internal/utils"
 )
 
-// FileInfo - информация о файле внутри архива
-type FileInfo struct {
-	FilePath string  `json:"file_path"`
-	Size     float64 `json:"size"`
-	MimeType string  `json:"mimetype"`
-}
-
-// Response - структура ответа сервера
-type Response struct {
-	Filename    string     `json:"filename"`
-	ArchiveSize float64    `json:"archive_size"`
-	TotalSize   float64    `json:"total_size"`
-	TotalFiles  int        `json:"total_files"`
-	Files       []FileInfo `json:"files"`
-}
-
-func (h *Handler) HandleArchiveInformation(w http.ResponseWriter, r *http.Request) {
+func (app *Application) HandleArchiveInformation(w http.ResponseWriter, r *http.Request) {
 	// Парсинг формы с файлом
-	err := r.ParseMultipartForm(h.Config.BufUploadSizeInfo)
+	err := r.ParseMultipartForm(app.Config.BufUploadSizeInfo)
 	if err != nil {
 		http.Error(w, "Error parsing multipart/form data: "+err.Error(), http.StatusBadRequest)
 		return

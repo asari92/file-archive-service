@@ -4,6 +4,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -11,6 +12,8 @@ type Config struct {
 	BufUploadSizeInfo   int64
 	BufUploadSizeCreate int64
 	BufUploadSizeMail   int64
+	MaxSendFileSize     int64
+	DialerTimeout       time.Duration
 	SMTPPort            int
 	SMTPHost            string
 	SMTPUser            string
@@ -24,6 +27,8 @@ func New() *Config {
 		BufUploadSizeInfo:   int64(getEnvAsInt("MAX_UPLOAD_SIZE_INFO", 10485760)),
 		BufUploadSizeCreate: int64(getEnvAsInt("MAX_UPLOAD_SIZE_CREATE", 33554432)),
 		BufUploadSizeMail:   int64(getEnvAsInt("MAX_UPLOAD_SIZE_MAIL", 10485760)),
+		MaxSendFileSize:     int64(getEnvAsInt("MAX_SEND_FILE_SIZE", 26214400)),
+		DialerTimeout:       time.Duration(getEnvAsInt("DIALER_TIMEOUT", 60)),
 		SMTPHost:            getEnv("SMTP_HOST", ""),
 		SMTPPort:            getEnvAsInt("SMTP_PORT", 587),
 		SMTPUser:            getEnv("SMTP_USER", ""),

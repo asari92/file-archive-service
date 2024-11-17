@@ -7,8 +7,6 @@ import (
 	"net/http"
 )
 
-// проверить реальный тип файлов вынести в отдельную функцию это проверку и использовать её в 2х хэндлерах
-
 // Разрешенные MIME-типы файлов для архивации
 var allowedMIMETypes = map[string]bool{
 	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": true,

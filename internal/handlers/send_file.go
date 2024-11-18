@@ -58,7 +58,7 @@ func (app *Application) HandleSendFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Подготовка и отправка писем
-	if err := app.Service.Mail.SendEmailWithAttachment(file, fileHeader.Filename, recipients); err != nil {
+	if err := app.Service.Mailer.SendEmailWithAttachment(app.Config.MailFrom, recipients, "Document", fileHeader.Filename, "", file); err != nil {
 		http.Error(w, "Failed to send email: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

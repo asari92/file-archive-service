@@ -1,21 +1,20 @@
 package service
 
 import (
-	"mime/multipart"
-
-	"file-archive-service/pkg/config"
+	"io"
 )
 
-type Mail interface {
-	SendEmailWithAttachment(file multipart.File, filename string, recipients []string) error
+// Mailer определяет интерфейс для отправки email
+type Mailer interface {
+	SendEmailWithAttachment(from string, to []string, subject, filename, text string, data io.Reader) error
 }
 
 type Service struct {
-	Mail
+	Mailer
 }
 
-func NewService(conf *config.Config) *Service {
+func NewService(mailer Mailer) *Service {
 	return &Service{
-		Mail: NewMailUsecases(conf),
+		Mailer: NewMailUsecases(mailer),
 	}
 }

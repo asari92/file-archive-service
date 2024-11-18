@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"file-archive-service/internal/utils"
+	"file-archive-service/pkg/utils"
 )
 
 func (app *Application) HandleArchiveInformation(w http.ResponseWriter, r *http.Request) {

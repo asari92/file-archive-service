@@ -4,11 +4,13 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"time"
 
+	"file-archive-service/internal/domain/mail"
 	"file-archive-service/internal/handlers"
 	"file-archive-service/internal/service"
-	"file-archive-service/internal/utils"
 	"file-archive-service/pkg/config"
+	"file-archive-service/pkg/utils"
 )
 
 func main() {
@@ -34,10 +36,13 @@ func main() {
 
 	slog.SetDefault(logger)
 
+	// Инициализация адаптера
+	mailer := mail.NewGoMailAdapter(conf.SMTPHost, conf.SMTPPort, conf.SMTPUser, conf.SMTPPassword, conf.DialerTimeout*time.Second)
+
 	app := &handlers.Application{
 		Config:  conf,
 		Logger:  logger,
-		Service: service.NewService(conf),
+		Service: service.NewService(mailer),
 	}
 
 	err := app.Serve(conf.Host + ":" + conf.Port)

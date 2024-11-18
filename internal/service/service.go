@@ -15,7 +15,6 @@ type Mailer interface {
 
 type Archiver interface {
 	CreateArchive(files []*multipart.FileHeader) (*bytes.Buffer, error)
-	// GenerateArchiveInfo(mFile *multipart.File, mFileHeader *multipart.FileHeader) (*models.Response, error)
 }
 
 type Service struct {

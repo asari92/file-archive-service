@@ -13,7 +13,7 @@ import (
 
 	"file-archive-service/internal/domain/archive"
 	"file-archive-service/internal/domain/mail"
-	"file-archive-service/internal/handlers"
+	"file-archive-service/internal/handler"
 	"file-archive-service/internal/service"
 	"file-archive-service/pkg/config"
 	"file-archive-service/pkg/utils"
@@ -45,7 +45,7 @@ func main() {
 	// Инициализация адаптера
 	mailer := mail.NewGoMailAdapter(conf.SMTPHost, conf.SMTPPort, conf.SMTPUser, conf.SMTPPassword, conf.DialerTimeout*time.Second)
 
-	h := &handlers.Handler{
+	h := &handler.Handler{
 		Config:  conf,
 		Logger:  logger,
 		Service: service.NewService(archive.NewZipArchiver(), mailer, conf),
@@ -57,7 +57,7 @@ func main() {
 	}
 }
 
-func serve(h *handlers.Handler, addr string) error {
+func serve(h *handler.Handler, addr string) error {
 	srv := &http.Server{
 		Addr:         addr,
 		ErrorLog:     slog.NewLogLogger(h.Logger.Handler(), slog.LevelError),

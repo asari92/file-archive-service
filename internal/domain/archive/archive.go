@@ -1,11 +1,12 @@
 package archive
 
 import (
-	// "archive/tar"
+	"archive/tar"
 	"archive/zip"
 	"bytes"
 	"io"
 	"mime/multipart"
+	"time"
 )
 
 // ZipArchiver is an implementation of Archiver for zip files.
@@ -15,7 +16,7 @@ func NewZipArchiver() *ZipArchiver {
 	return &ZipArchiver{}
 }
 
-func (s *ZipArchiver) CreateArchive(files []*multipart.FileHeader) (*bytes.Buffer, error) {
+func (za *ZipArchiver) CreateArchive(files []*multipart.FileHeader) (*bytes.Buffer, error) {
 	buf := new(bytes.Buffer)
 	zipWriter := zip.NewWriter(buf)
 
@@ -52,33 +53,40 @@ func NewTarArchiver() *TarArchiver {
 	return &TarArchiver{}
 }
 
-// func (t *TarArchiver) CreateArchive(files []*multipart.FileHeader) (*bytes.Buffer, error) {
-// 	buf := new(bytes.Buffer)
-// 	tarWriter := tar.NewWriter(buf)
+func (ta *TarArchiver) CreateArchive(files []*multipart.FileHeader) (*bytes.Buffer, error) {
+	buf := new(bytes.Buffer)
+	tarWriter := tar.NewWriter(buf)
 
-// 	for _, fileHeader := range files {
-// 		file, err := fileHeader.Open()
-// 		if err != nil {
-// 			return nil, err
-// 		}
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
 
-// 		tarWriter.Write()
-// 		zipFile, err := tarWriter.Create(fileHeader.Filename)
-// 		if err != nil {
-// 			file.Close()
-// 			return nil, err
-// 		}
+		// Создание заголовка для файла с базовыми правами доступа и текущим временем
+		header := &tar.Header{
+			Name:    fileHeader.Filename,
+			Size:    fileHeader.Size,
+			Mode:    0o644,      // Базовые права доступа (rw-r--r--)
+			ModTime: time.Now(), // Используем текущее время
+		}
 
-// 		if _, err := io.Copy(zipFile, file); err != nil {
-// 			file.Close()
-// 			return nil, err
-// 		}
-// 		file.Close()
-// 	}
+		// Запись заголовка в архив
+		if err := tarWriter.WriteHeader(header); err != nil {
+			return nil, err
+		}
 
-// 	if err := tarWriter.Close(); err != nil {
-// 		return nil, err
-// 	}
+		// Копирование содержимого файла в архив
+		if _, err := io.Copy(tarWriter, file); err != nil {
+			return nil, err
+		}
+	}
 
-// 	return buf, nil
-// }
+	// Закрытие tar.Writer для завершения записи архива
+	if err := tarWriter.Close(); err != nil {
+		return nil, err
+	}
+
+	return buf, nil
+}

@@ -33,6 +33,7 @@ func (h *Handler) HandleCreateArchive(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.Logger.Error("ValidateMimeTypes", "error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	buf, err := h.Service.CreateArchive(files)

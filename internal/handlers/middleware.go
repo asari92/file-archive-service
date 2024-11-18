@@ -53,7 +53,6 @@ func (app *Application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Info("Received request",
 			"remote_addr", r.RemoteAddr,
-			"protocol", r.Proto,
 			"method", r.Method,
 			"url", r.URL.RequestURI(),
 		)

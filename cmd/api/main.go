@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"file-archive-service/internal/domain/archive"
 	"file-archive-service/internal/domain/mail"
 	"file-archive-service/internal/handlers"
 	"file-archive-service/internal/service"
@@ -42,7 +43,7 @@ func main() {
 	app := &handlers.Application{
 		Config:  conf,
 		Logger:  logger,
-		Service: service.NewService(mailer, conf),
+		Service: service.NewService(archive.NewZipArchiver(), mailer, conf),
 	}
 
 	err := app.Serve(conf.Host + ":" + conf.Port)

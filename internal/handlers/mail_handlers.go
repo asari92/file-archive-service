@@ -12,38 +12,38 @@ var mailerAllowedSignatures = map[string][]byte{
 	"application/pdf": {0x25, 0x50, 0x44, 0x46}, // PDF
 }
 
-func (app *Application) HandleSendFile(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleSendFile(w http.ResponseWriter, r *http.Request) {
 	// Парсинг формы и базовая проверка
-	if err := r.ParseMultipartForm(app.Config.BufUploadSizeMail); err != nil {
-		app.Logger.Error("Error parsing form", "error", err)
+	if err := r.ParseMultipartForm(h.Config.BufUploadSizeMail); err != nil {
+		h.Logger.Error("Error parsing form", "error", err)
 		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	files := r.MultipartForm.File["file"]
 	if files == nil || len(files) != 1 {
-		app.Logger.Error("zero or more than 1 file")
+		h.Logger.Error("zero or more than 1 file")
 		http.Error(w, "Please attach only one file", http.StatusBadRequest)
 		return
 	}
 
 	fileHeader := files[0]
 
-	if fileHeader.Size >= app.Config.MaxSendFileSize {
-		app.Logger.Error("file size exceeds the maximum limit")
+	if fileHeader.Size >= h.Config.MaxSendFileSize {
+		h.Logger.Error("file size exceeds the maximum limit")
 		http.Error(w, "file size exceeds the maximum limit", http.StatusBadRequest)
 		return
 	}
 	file, err := fileHeader.Open()
 	if err != nil {
-		app.Logger.Error("failed to open file", "error", err)
+		h.Logger.Error("failed to open file", "error", err)
 		http.Error(w, "failed to open file", http.StatusInternalServerError)
 		return
 	}
 	defer file.Close()
 
 	if err := validator.ValidateFileSignature(file, fileHeader.Header.Get("Content-Type"), mailerAllowedSignatures); err != nil {
-		app.Logger.Error("ValidateFileSignature", "error", err)
+		h.Logger.Error("ValidateFileSignature", "error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -52,15 +52,15 @@ func (app *Application) HandleSendFile(w http.ResponseWriter, r *http.Request) {
 	emailList := strings.Split(r.FormValue("emails"), ",")
 	recipients, err := validator.ValidateEmails(emailList)
 	if err != nil {
-		app.Logger.Error("ValidateEmails", "error", err)
+		h.Logger.Error("ValidateEmails", "error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Подготовка и отправка писем
-	err = app.Service.Mailer.SendEmailWithAttachment(app.Config.MailFrom, recipients, "Document", fileHeader.Filename, "", file)
+	err = h.Service.Mailer.SendEmailWithAttachment(h.Config.MailFrom, recipients, "Document", fileHeader.Filename, "", file)
 	if err != nil {
-		app.Logger.Error("SendEmailWithAttachment", "error", err)
+		h.Logger.Error("SendEmailWithAttachment", "error", err)
 		http.Error(w, "Failed to send email: "+err.Error(), http.StatusInternalServerError)
 	}
 

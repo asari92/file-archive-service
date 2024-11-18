@@ -14,30 +14,30 @@ var archiverAllowedMimeTypes = map[string]bool{
 	"image/png":       true,
 }
 
-func (app *Application) HandleCreateArchive(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(app.Config.BufUploadSizeCreate)
+func (h *Handler) HandleCreateArchive(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(h.Config.BufUploadSizeCreate)
 	if err != nil {
-		app.Logger.Error("parsing multipart form", "error", err)
+		h.Logger.Error("parsing multipart form", "error", err)
 		http.Error(w, "Error parsing multipart form: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	files := r.MultipartForm.File["files[]"]
 	if files == nil {
-		app.Logger.Error("no files provided", "error", err)
+		h.Logger.Error("no files provided", "error", err)
 		http.Error(w, "No files provided", http.StatusBadRequest)
 		return
 	}
 
 	err = validator.ValidateMimeTypes(files, archiverAllowedMimeTypes)
 	if err != nil {
-		app.Logger.Error("ValidateMimeTypes", "error", err)
+		h.Logger.Error("ValidateMimeTypes", "error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	buf, err := app.Service.CreateArchive(files)
+	buf, err := h.Service.CreateArchive(files)
 	if err != nil {
-		app.Logger.Error("CreateArchive", "error", err)
+		h.Logger.Error("CreateArchive", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -46,33 +46,33 @@ func (app *Application) HandleCreateArchive(w http.ResponseWriter, r *http.Reque
 	w.Write(buf.Bytes())
 }
 
-func (app *Application) HandleArchiveInformation(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleArchiveInformation(w http.ResponseWriter, r *http.Request) {
 	// 	// Парсинг формы с файлом
-	err := r.ParseMultipartForm(app.Config.BufUploadSizeInfo)
+	err := r.ParseMultipartForm(h.Config.BufUploadSizeInfo)
 	if err != nil {
-		app.Logger.Error("parsing multipart/form data", "error", err)
+		h.Logger.Error("parsing multipart/form data", "error", err)
 		http.Error(w, "Error parsing multipart/form data: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	mFile, mFileHeader, err := r.FormFile("file")
 	if err != nil {
-		app.Logger.Error("failed to get the file", "error", err)
+		h.Logger.Error("failed to get the file", "error", err)
 		http.Error(w, "Failed to get the file", http.StatusBadRequest)
 		return
 	}
 	defer mFile.Close()
 
-	response, err := app.Service.GenerateArchiveInfo(&mFile, mFileHeader)
+	response, err := h.Service.GenerateArchiveInfo(&mFile, mFileHeader)
 	if err != nil {
-		app.Logger.Error("GenerateArchiveInfo", "error", err)
+		h.Logger.Error("GenerateArchiveInfo", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
-		app.Logger.Error("json encode", "error", err)
+		h.Logger.Error("json encode", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.Header().Set("Content-Type", "application/json")

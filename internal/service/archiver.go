@@ -14,17 +14,17 @@ import (
 	"github.com/mholt/archiver/v3"
 )
 
-type ArchiveUsecases struct {
+type ArchiveService struct {
 	Archiver Archiver
 }
 
-func NewArchiveUsecases(archiver Archiver) *ArchiveUsecases {
-	return &ArchiveUsecases{
+func NewArchiverService(archiver Archiver) *ArchiveService {
+	return &ArchiveService{
 		Archiver: archiver,
 	}
 }
 
-func (s *ArchiveUsecases) CreateArchive(files []*multipart.FileHeader) (*bytes.Buffer, error) {
+func (s *ArchiveService) CreateArchive(files []*multipart.FileHeader) (*bytes.Buffer, error) {
 	return s.Archiver.CreateArchive(files)
 }
 

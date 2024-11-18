@@ -49,9 +49,9 @@ func secureHeaders(next http.Handler) http.Handler {
 	})
 }
 
-func (app *Application) logRequest(next http.Handler) http.Handler {
+func (h *Handler) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		app.Logger.Info("Received request",
+		h.Logger.Info("Received request",
 			"remote_addr", r.RemoteAddr,
 			"method", r.Method,
 			"url", r.URL.RequestURI(),
@@ -61,13 +61,13 @@ func (app *Application) logRequest(next http.Handler) http.Handler {
 	})
 }
 
-func (app *Application) recoverPanic(next http.Handler) http.Handler {
+func (h *Handler) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
 				err = fmt.Errorf("%s", err)
-				app.Logger.Error("recover panic",
+				h.Logger.Error("recover panic",
 					"error", err,
 					"stack_trace", string(debug.Stack()), // Включение стека
 				)

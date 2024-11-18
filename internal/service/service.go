@@ -26,8 +26,8 @@ type Service struct {
 
 func NewService(archiver Archiver, mailer Mailer, conf *config.Config) *Service {
 	return &Service{
-		Archiver: NewArchiveUsecases(archiver),
-		Mailer:   NewMailUsecases(mailer),
+		Archiver: NewArchiverService(archiver),
+		Mailer:   NewMailerService(mailer),
 		Config:   conf,
 	}
 }

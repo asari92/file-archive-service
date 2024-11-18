@@ -42,7 +42,7 @@ func main() {
 	app := &handlers.Application{
 		Config:  conf,
 		Logger:  logger,
-		Service: service.NewService(mailer),
+		Service: service.NewService(mailer, conf),
 	}
 
 	err := app.Serve(conf.Host + ":" + conf.Port)

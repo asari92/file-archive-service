@@ -25,8 +25,8 @@ type Config struct {
 // New returns a new Config struct
 func New() *Config {
 	return &Config{
-		Host:                getEnv("HOST", "http://localhost"),
-		Port:                getEnv("PORT", ":3000"),
+		Host:                getEnv("HOST", "localhost"),
+		Port:                getEnv("PORT", ":10000"),
 		BufUploadSizeInfo:   int64(getEnvAsInt("MAX_UPLOAD_SIZE_INFO", 10485760)),
 		BufUploadSizeCreate: int64(getEnvAsInt("MAX_UPLOAD_SIZE_CREATE", 33554432)),
 		BufUploadSizeMail:   int64(getEnvAsInt("MAX_UPLOAD_SIZE_MAIL", 10485760)),

@@ -2,18 +2,21 @@ package mail
 
 import (
 	"io"
-	"time"
 
 	gomail "gopkg.in/mail.v2"
 )
 
-type GoMailAdapter struct {
-	Dialer *gomail.Dialer
+// Dialer интерфейс для мокирования отправки сообщений
+type Dialer interface {
+	DialAndSend(m ...*gomail.Message) error
 }
 
-func NewGoMailAdapter(host string, port int, username, password string, timeout time.Duration) *GoMailAdapter {
-	dialer := gomail.NewDialer(host, port, username, password)
-	dialer.Timeout = timeout
+// GoMailAdapter использует интерфейс Dialer для отправки почты
+type GoMailAdapter struct {
+	Dialer Dialer
+}
+
+func NewGoMailAdapter(dialer Dialer) *GoMailAdapter {
 	return &GoMailAdapter{Dialer: dialer}
 }
 

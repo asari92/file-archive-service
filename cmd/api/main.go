@@ -17,6 +17,8 @@ import (
 	"file-archive-service/internal/service"
 	"file-archive-service/pkg/config"
 	"file-archive-service/pkg/utils"
+
+	gomail "gopkg.in/mail.v2"
 )
 
 func main() {
@@ -43,7 +45,9 @@ func main() {
 	slog.SetDefault(logger)
 
 	// Инициализация адаптера
-	mailer := mail.NewGoMailAdapter(conf.SMTPHost, conf.SMTPPort, conf.SMTPUser, conf.SMTPPassword, conf.DialerTimeout*time.Second)
+	dialer := gomail.NewDialer(conf.SMTPHost, conf.SMTPPort, conf.SMTPUser, conf.SMTPPassword)
+	dialer.Timeout = conf.DialerTimeout * time.Second
+	mailer := mail.NewGoMailAdapter(dialer)
 
 	h := &handler.Handler{
 		Config:  conf,

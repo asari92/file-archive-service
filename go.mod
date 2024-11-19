@@ -1,6 +1,6 @@
 module file-archive-service
 
-go 1.23.0
+go 1.23
 
 require (
 	github.com/mholt/archiver/v3 v3.5.1

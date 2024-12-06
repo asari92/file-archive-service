@@ -1,10 +1,14 @@
 package mail
 
 import (
-	"errors"
+	"fmt"
 	"io"
+	"log"
 	"strings"
 	"testing"
+
+	"file-archive-service/pkg/config"
+	"file-archive-service/pkg/utils"
 
 	gomail "gopkg.in/mail.v2"
 )
@@ -21,6 +25,16 @@ func (md *MockDialer) DialAndSend(m ...*gomail.Message) error {
 }
 
 func TestGoMailAdapter_SendEmailWithAttachment(t *testing.T) {
+	utils.InitAbsolutePath()
+	// Загрузите переменные окружения из файла .env
+	if err := utils.LoadEnv(utils.GetAbsPath() + "/.env"); err != nil {
+		log.Printf("Failed to load .env file: %v", err)
+	}
+
+	conf := config.New()
+
+	fmt.Println(conf)
+
 	tests := []struct {
 		name     string
 		dialer   *MockDialer
@@ -33,40 +47,20 @@ func TestGoMailAdapter_SendEmailWithAttachment(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name: "Success - Email sent",
-			dialer: &MockDialer{
-				SendFunc: func(m ...*gomail.Message) error {
-					return nil // No error, simulating successful send
-				},
-			},
+			name:     "Success - Email sent",
 			from:     "sender@example.com",
-			to:       []string{"receiver@example.com"},
+			to:       []string{"test@gmail.com"},
 			subject:  "Test Subject",
 			filename: "attachment.txt",
 			text:     "Hello, this is a test",
 			data:     strings.NewReader("This is the content of the attachment"),
 			wantErr:  false,
 		},
-		{
-			name: "Failure - SMTP connection error",
-			dialer: &MockDialer{
-				SendFunc: func(m ...*gomail.Message) error {
-					return errors.New("SMTP connection error")
-				},
-			},
-			from:     "sender@example.com",
-			to:       []string{"receiver@example.com"},
-			subject:  "Test Subject",
-			filename: "attachment.txt",
-			text:     "Hello, this is a test",
-			data:     strings.NewReader("This is the content of the attachment"),
-			wantErr:  true,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			adapter := NewGoMailAdapter(tt.dialer)
+			adapter := NewGoMailAdapter(conf)
 			err := adapter.SendEmailWithAttachment(tt.from, tt.to, tt.subject, tt.filename, tt.text, tt.data)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GoMailAdapter.SendEmailWithAttachment() error = %v, wantErr %v", err, tt.wantErr)
